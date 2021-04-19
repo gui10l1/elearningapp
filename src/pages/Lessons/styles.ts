@@ -1,5 +1,7 @@
 import styled, { css } from 'styled-components/native';
+import { FlatList } from 'react-native';
 import { RectButton } from 'react-native-gesture-handler';
+import { ILesson } from '.';
 
 interface IPlayerButtonProps {
   isFinished: boolean;
@@ -51,7 +53,7 @@ export const CoursesQuantityText = styled.Text`
   color: #a0a0b2;
 `;
 
-export const LessonsList = styled.ScrollView`
+export const LessonsList = styled(FlatList as new () => FlatList<ILesson>)`
   width: 100%;
 
   margin-top: 8px;
@@ -125,14 +127,21 @@ export const LessonDescriptionText = styled.Text`
   font-size: 13px;
   font-family: 'Roboto-Regular';
   color: #c4c4d1;
+
+  margin-right: 8px;
 `;
 
-export const Duration = styled.Text`
+export const Duration = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+
+export const DurationText = styled.Text`
   font-size: 13px;
   font-family: 'Roboto-Regular';
   color: #c4c4d1;
 
-  margin-left: 17px;
+  margin-left: 3px;
 `;
 
 export const Badge = styled.Text`

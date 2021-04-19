@@ -1,5 +1,7 @@
 import styled from 'styled-components/native';
+import { FlatList } from 'react-native';
 import { RectButton } from 'react-native-gesture-handler';
+import { ICourse } from '.';
 
 export const Header = styled.View`
   width: 100%;
@@ -52,7 +54,7 @@ export const CoursesQuantityText = styled.Text`
   color: #a0a0b2;
 `;
 
-export const Courses = styled.FlatList`
+export const Courses = styled(FlatList as new () => FlatList<ICourse>)`
   margin-top: 8px;
   margin-bottom: 80px;
 

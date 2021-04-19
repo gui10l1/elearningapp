@@ -1,6 +1,6 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Image, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 
 import elearningLogo from '../../assets/elearninglogo.png';
@@ -19,11 +19,28 @@ import {
   LessonDescription,
   LessonDescriptionText,
   Duration,
+  DurationText,
   Badge,
 } from './styles';
+import api from '../../services/elearningApi';
+
+interface IParams {
+  id: string;
+}
+
+export interface ILesson {
+  id: string;
+  name: string;
+  description: string;
+  duration: number;
+}
 
 const Lessons: React.FC = () => {
+  const [lessons, setLessons] = useState<Array<ILesson>>();
+
   const { navigate } = useNavigation();
+  const { params } = useRoute();
+  const { id } = params as IParams;
 
   const navigateToHome = useCallback(() => {
     navigate('Home');
@@ -32,6 +49,16 @@ const Lessons: React.FC = () => {
   const navigateToLesson = useCallback(() => {
     navigate('Lesson');
   }, [navigate]);
+
+  useEffect(() => {
+    async function loadLessons() {
+      const { data } = await api.get(`/course-lessons/${id}`);
+
+      setLessons(data);
+    }
+
+    loadLessons();
+  }, [id]);
 
   return (
     <>
@@ -52,133 +79,35 @@ const Lessons: React.FC = () => {
           <CoursesQuantityText>15 aulas</CoursesQuantityText>
         </ContainerHeader>
 
-        <LessonsList>
-          <Lesson>
-            <ButtonPlayer isFinished onPress={navigateToLesson}>
-              <Image source={playerIcon} />
-            </ButtonPlayer>
+        <LessonsList
+          data={lessons}
+          renderItem={({ item, index }) => {
+            return (
+              <Lesson>
+                <ButtonPlayer isFinished onPress={navigateToLesson}>
+                  <Image source={playerIcon} />
+                </ButtonPlayer>
 
-            <LessonContent>
-              <LessonTitle>Introdução à teoria matemática</LessonTitle>
+                <LessonContent>
+                  <LessonTitle>{item.name}</LessonTitle>
 
-              <LessonDescription>
-                <View style={{ flexDirection: 'row' }}>
-                  <LessonDescriptionText>Aula 01</LessonDescriptionText>
-                  <Duration>
-                    <Icon name="clock" size={10} color="#C4C4D1" />
-                    5min
-                  </Duration>
-                </View>
-                <Badge>Completo!</Badge>
-              </LessonDescription>
-            </LessonContent>
-          </Lesson>
-
-          <Lesson>
-            <ButtonPlayer isFinished>
-              <Image source={playerIcon} />
-            </ButtonPlayer>
-
-            <LessonContent>
-              <LessonTitle>Introdução à teoria matemática</LessonTitle>
-
-              <LessonDescription>
-                <View style={{ flexDirection: 'row' }}>
-                  <LessonDescriptionText>Aula 01</LessonDescriptionText>
-                  <Duration>
-                    <Icon name="clock" size={10} color="#C4C4D1" />
-                    5min
-                  </Duration>
-                </View>
-                <Badge>Completo!</Badge>
-              </LessonDescription>
-            </LessonContent>
-          </Lesson>
-
-          <Lesson>
-            <ButtonPlayer isFinished>
-              <Image source={playerIcon} />
-            </ButtonPlayer>
-
-            <LessonContent>
-              <LessonTitle>Introdução à teoria matemática</LessonTitle>
-
-              <LessonDescription>
-                <View style={{ flexDirection: 'row' }}>
-                  <LessonDescriptionText>Aula 01</LessonDescriptionText>
-                  <Duration>
-                    <Icon name="clock" size={10} color="#C4C4D1" />
-                    5min
-                  </Duration>
-                </View>
-                <Badge>Completo!</Badge>
-              </LessonDescription>
-            </LessonContent>
-          </Lesson>
-
-          <Lesson>
-            <ButtonPlayer isFinished>
-              <Image source={playerIcon} />
-            </ButtonPlayer>
-
-            <LessonContent>
-              <LessonTitle>Introdução à teoria matemática</LessonTitle>
-
-              <LessonDescription>
-                <View style={{ flexDirection: 'row' }}>
-                  <LessonDescriptionText>Aula 01</LessonDescriptionText>
-                  <Duration>
-                    <Icon name="clock" size={10} color="#C4C4D1" />
-                    5min
-                  </Duration>
-                </View>
-                <Badge>Completo!</Badge>
-              </LessonDescription>
-            </LessonContent>
-          </Lesson>
-
-          <Lesson>
-            <ButtonPlayer isFinished>
-              <Image source={playerIcon} />
-            </ButtonPlayer>
-
-            <LessonContent>
-              <LessonTitle>Introdução à teoria matemática</LessonTitle>
-
-              <LessonDescription>
-                <View style={{ flexDirection: 'row' }}>
-                  <LessonDescriptionText>Aula 01</LessonDescriptionText>
-                  <Duration>
-                    <Icon name="clock" size={10} color="#C4C4D1" />
-                    5min
-                  </Duration>
-                </View>
-                <Badge>Completo!</Badge>
-              </LessonDescription>
-            </LessonContent>
-          </Lesson>
-
-          <Lesson>
-            <ButtonPlayer isFinished>
-              <Image source={playerIcon} />
-            </ButtonPlayer>
-
-            <LessonContent>
-              <LessonTitle>Introdução à teoria matemática</LessonTitle>
-
-              <LessonDescription>
-                <View style={{ flexDirection: 'row' }}>
-                  <LessonDescriptionText>Aula 01</LessonDescriptionText>
-                  <Duration>
-                    <Icon name="clock" size={10} color="#C4C4D1" />
-                    5min
-                  </Duration>
-                </View>
-                <Badge>Completo!</Badge>
-              </LessonDescription>
-            </LessonContent>
-          </Lesson>
-        </LessonsList>
+                  <LessonDescription>
+                    <View style={{ flexDirection: 'row' }}>
+                      <LessonDescriptionText>
+                        Aula {index + 1}
+                      </LessonDescriptionText>
+                      <Duration>
+                        <Icon name="clock" size={10} color="#C4C4D1" />
+                        <DurationText>{item.duration / 60} min</DurationText>
+                      </Duration>
+                    </View>
+                    <Badge>Completo!</Badge>
+                  </LessonDescription>
+                </LessonContent>
+              </Lesson>
+            );
+          }}
+        />
       </Container>
     </>
   );

@@ -5,7 +5,6 @@ import { Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 import elearningLogo from '../../assets/elearninglogo.png';
-import math from '../../assets/Math.png';
 import Input from '../../components/Input';
 import {
   Header,
@@ -26,17 +25,17 @@ import {
   FavoritesText,
   Line,
 } from './styles';
-import elearningApi from '../../services/elearningApi';
+import api from '../../services/elearningApi';
 
 interface ILesson {
   id: string;
 }
 
-interface ICourse {
+export interface ICourse {
   id: string;
   image: string;
   name: string;
-  lessions: ILesson[];
+  lessons: ILesson[];
 }
 
 const Home: React.FC = () => {
@@ -46,7 +45,7 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     async function loadCourses() {
-      const { data } = await elearningApi.get<Array<ICourse>>('/courses');
+      const { data } = await api.get<Array<ICourse>>('/courses');
 
       setCourses(data);
     }
@@ -62,9 +61,12 @@ const Home: React.FC = () => {
     navigate('Favorites');
   }, [navigate]);
 
-  const navigateToLessons = useCallback(() => {
-    navigate('Lessons');
-  }, [navigate]);
+  const navigateToLessons = useCallback(
+    (id: string) => {
+      navigate('Lessons', { id });
+    },
+    [navigate],
+  );
 
   return (
     <>
@@ -88,30 +90,33 @@ const Home: React.FC = () => {
 
         <Courses
           data={courses}
-          keyExtractor={(course: any) => course.id}
+          keyExtractor={course => course.id}
+          contentContainerStyle={{ flexWrap: 'wrap', flexDirection: 'row' }}
           renderItem={({ index, item }) => {
-            const parsedItem = item as any;
             const restIndex = index % 2;
 
             if (restIndex === 0) {
               return (
-                <Course style={{ marginLeft: 0 }} onPress={navigateToLessons}>
-                  <CourseImage source={parsedItem.image} />
+                <Course
+                  style={{ marginLeft: 0 }}
+                  onPress={() => navigateToLessons(item.id)}
+                >
+                  <CourseImage source={{ uri: item.image }} />
 
-                  <CourseName>{parsedItem.name}</CourseName>
+                  <CourseName>{item.name}</CourseName>
 
-                  <CourseQuantity>{parsedItem.lessons.length}</CourseQuantity>
+                  <CourseQuantity>{item.lessons.length} aulas</CourseQuantity>
                 </Course>
               );
             }
 
             return (
-              <Course onPress={navigateToLessons}>
-                <CourseImage source={parsedItem.image} />
+              <Course onPress={() => navigateToLessons(item.id)}>
+                <CourseImage source={{ uri: item.image }} />
 
-                <CourseName>{parsedItem.name}</CourseName>
+                <CourseName>{item.name}</CourseName>
 
-                <CourseQuantity>{parsedItem.lessons.length}</CourseQuantity>
+                <CourseQuantity>{item.lessons.length} aulas</CourseQuantity>
               </Course>
             );
           }}
