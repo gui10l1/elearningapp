@@ -97,6 +97,8 @@ export const ButtonPlayer = styled(RectButton)<IPlayerButtonProps>`
 export const LessonContent = styled.View`
   flex: 1;
 
+  justify-content: space-between;
+
   height: 100%;
   background-color: #fff;
 

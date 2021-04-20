@@ -23,6 +23,7 @@ import {
   Badge,
 } from './styles';
 import api from '../../services/elearningApi';
+import { useLessons } from '../../hooks/lessons';
 
 interface IParams {
   id: string;
@@ -31,35 +32,85 @@ interface IParams {
 export interface ILesson {
   id: string;
   name: string;
-  description: string;
   duration: number;
+  completed: boolean;
+}
+
+interface IResponse extends ILesson {
+  course_id: string;
+}
+
+interface ICourse {
+  name: string;
 }
 
 const Lessons: React.FC = () => {
+  const [course, setCourse] = useState<ICourse>();
   const [lessons, setLessons] = useState<Array<ILesson>>();
 
+  const { completedLessons: completed } = useLessons();
   const { navigate } = useNavigation();
   const { params } = useRoute();
   const { id } = params as IParams;
 
+  // Load lessons from API and filter which one is completed or not
+  useEffect(() => {
+    async function loadLessons() {
+      const lessonsFiltered: ILesson[] = [];
+
+      const { data } = await api.get<Array<IResponse>>(`/course-lessons/${id}`);
+      const { data: courseFromApi } = await api.get(`courses/${id}`);
+      const parsedResponse: IResponse[] = data.map(item => {
+        return {
+          completed: item.completed,
+          course_id: item.course_id,
+          duration: item.duration,
+          id: item.id,
+          name: item.name,
+        };
+      });
+
+      const completedLessons = completed.filter(item => item.course_id === id);
+
+      parsedResponse.map(item => {
+        const find = completedLessons.find(
+          anotherItem => anotherItem.id === item.id,
+        );
+
+        if (find) {
+          lessonsFiltered.push(find);
+          return find;
+        }
+
+        lessonsFiltered.push(item);
+        return item;
+      });
+
+      setLessons(lessonsFiltered);
+      setCourse(courseFromApi);
+    }
+
+    loadLessons();
+  }, [id, completed]);
+
+  // Navigation to home screen
   const navigateToHome = useCallback(() => {
     navigate('Home');
   }, [navigate]);
 
-  const navigateToLesson = useCallback(() => {
-    navigate('Lesson');
-  }, [navigate]);
+  // Navigate to lesson screen
+  const navigateToLesson = useCallback(
+    (lessonId: string, lessonIndex: number, lessonsList: Array<ILesson>) => {
+      navigate('Lesson', { id: lessonId, lessonIndex, lessons: lessonsList });
+    },
+    [navigate],
+  );
 
-  useEffect(() => {
-    async function loadLessons() {
-      const { data } = await api.get(`/course-lessons/${id}`);
+  if (!lessons) {
+    return <View />;
+  }
 
-      setLessons(data);
-    }
-
-    loadLessons();
-  }, [id]);
-
+  // Screen
   return (
     <>
       <Header>
@@ -75,8 +126,12 @@ const Lessons: React.FC = () => {
 
       <Container>
         <ContainerHeader>
-          <ContainerHeaderText>Matemática</ContainerHeaderText>
-          <CoursesQuantityText>15 aulas</CoursesQuantityText>
+          <ContainerHeaderText>{course?.name}</ContainerHeaderText>
+          <CoursesQuantityText>
+            {lessons?.length === 1
+              ? `${lessons.length} aula`
+              : `${lessons?.length} aulas`}
+          </CoursesQuantityText>
         </ContainerHeader>
 
         <LessonsList
@@ -84,7 +139,10 @@ const Lessons: React.FC = () => {
           renderItem={({ item, index }) => {
             return (
               <Lesson>
-                <ButtonPlayer isFinished onPress={navigateToLesson}>
+                <ButtonPlayer
+                  isFinished={!!item.completed}
+                  onPress={() => navigateToLesson(item.id, index, lessons)}
+                >
                   <Image source={playerIcon} />
                 </ButtonPlayer>
 
@@ -101,7 +159,7 @@ const Lessons: React.FC = () => {
                         <DurationText>{item.duration / 60} min</DurationText>
                       </Duration>
                     </View>
-                    <Badge>Completo!</Badge>
+                    {item.completed && <Badge>Completo!</Badge>}
                   </LessonDescription>
                 </LessonContent>
               </Lesson>

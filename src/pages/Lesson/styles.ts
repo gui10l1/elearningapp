@@ -1,6 +1,11 @@
-import styled from 'styled-components/native';
+import styled, { css } from 'styled-components/native';
+import { shade } from 'polished';
 import Icon from 'react-native-vector-icons/Feather';
 import { RectButton } from 'react-native-gesture-handler';
+
+interface IEnabledProps {
+  isEnabled: boolean;
+}
 
 export const Header = styled.View`
   width: 100%;
@@ -26,7 +31,7 @@ export const Container = styled.View`
   position: relative;
 `;
 
-export const Video = styled.View`
+export const Video = styled.TouchableHighlight`
   background-color: #3d3d4c;
   width: 100%;
   height: 210px;
@@ -107,14 +112,20 @@ export const BackButton = styled(RectButton)`
   border-radius: 40px;
 `;
 
-export const BackButtonText = styled.Text`
+export const BackButtonText = styled.Text<IEnabledProps>`
   color: #ff6680;
   font-size: 15px;
 
   margin-left: 8px;
+
+  ${props =>
+    !props.isEnabled &&
+    css`
+      color: #c4c4d1;
+    `}
 `;
 
-export const ForwardButton = styled(RectButton)`
+export const ForwardButton = styled(RectButton)<IEnabledProps>`
   flex-direction: row;
   align-items: center;
 
@@ -123,6 +134,12 @@ export const ForwardButton = styled(RectButton)`
   background-color: #ff6680;
 
   border-radius: 40px;
+
+  ${props =>
+    !props.isEnabled &&
+    css`
+      background-color: ${shade(0.55, '#ff6680')};
+    `}
 `;
 
 export const ForwardButtonText = styled.Text`

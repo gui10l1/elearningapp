@@ -43,6 +43,7 @@ const Home: React.FC = () => {
 
   const { navigate } = useNavigation();
 
+  // Load courses from API
   useEffect(() => {
     async function loadCourses() {
       const { data } = await api.get<Array<ICourse>>('/courses');
@@ -53,14 +54,17 @@ const Home: React.FC = () => {
     loadCourses();
   }, []);
 
+  // Handle search
   const handleSubmitSearch = useCallback(() => {
     // CODE
   }, []);
 
+  // Navigate to favorite courses screen
   const navigateToFavoriteCourses = useCallback(() => {
     navigate('Favorites');
   }, [navigate]);
 
+  // Navigate to lessons list screen
   const navigateToLessons = useCallback(
     (id: string) => {
       navigate('Lessons', { id });
@@ -68,6 +72,7 @@ const Home: React.FC = () => {
     [navigate],
   );
 
+  // Screen
   return (
     <>
       <Header>
@@ -85,7 +90,7 @@ const Home: React.FC = () => {
       <Container>
         <ContainerHeader>
           <ContainerHeaderText>Categorias</ContainerHeaderText>
-          <CoursesQuantityText>43 cursos</CoursesQuantityText>
+          <CoursesQuantityText>{courses.length} cursos</CoursesQuantityText>
         </ContainerHeader>
 
         <Courses

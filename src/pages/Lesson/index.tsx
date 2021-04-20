@@ -1,6 +1,6 @@
-import React, { useCallback } from 'react';
-import { Image } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import { Image, View } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 // import YoutubePlayer from 'react-native-youtube-iframe';
 
@@ -25,14 +25,79 @@ import {
   ForwardButton,
   ForwardButtonText,
 } from './styles';
+import api from '../../services/elearningApi';
+import { useLessons } from '../../hooks/lessons';
+
+interface IRouteParams {
+  id: string;
+  lessonIndex: number;
+  lessons: Array<ILesson>;
+}
+
+interface ILesson {
+  id: string;
+  name: string;
+  videoId: string;
+  courseId: string;
+  description: string;
+  duration: number;
+}
 
 const Lesson: React.FC = () => {
-  const { navigate } = useNavigation();
+  const [lesson, setLesson] = useState<ILesson>();
 
+  const { saveCompletedLesson } = useLessons();
+  const { params } = useRoute();
+  const { navigate } = useNavigation();
+  const { id, lessonIndex: index, lessons } = params as IRouteParams;
+
+  // Load lesson from API
+  useEffect(() => {
+    async function loadLesson() {
+      const { data } = await api.get(`/lessons/${id}`);
+
+      setLesson({
+        description: data.description,
+        duration: data.duration,
+        id: data.id,
+        name: data.name,
+        videoId: data.video_id,
+        courseId: data.course_id,
+      });
+    }
+
+    loadLesson();
+  }, [id]);
+
+  // Navigate to lessons screen
   const navigateToLessons = useCallback(() => {
     navigate('Lessons');
   }, [navigate]);
 
+  // Navigate to next/previous lesson
+  const navigateToLesson = useCallback(
+    (lessonId: string, lessonIndex: number, lessonsList: Array<ILesson>) => {
+      navigate('Lesson', { id: lessonId, lessonIndex, lessons: lessonsList });
+    },
+    [navigate],
+  );
+
+  // Get previous lesson
+  const previousLesson = useMemo<ILesson>(() => {
+    return lessons[index - 1];
+  }, [lessons, index]);
+
+  // Get next lesson
+  const nextLesson = useMemo<ILesson>(() => {
+    return lessons[index + 1];
+  }, [lessons, index]);
+
+  // Loading screen
+  if (!lesson) {
+    return <View />;
+  }
+
+  // Screen
   return (
     <>
       <Header>
@@ -48,36 +113,48 @@ const Lesson: React.FC = () => {
 
       <Container>
         {/* <YoutubePlayer height={210} videoId="nPvuNsRccVw" /> */}
-        <Video>
+        <Video onPress={() => saveCompletedLesson(lesson.id, lesson.courseId)}>
           <PlayerImage source={playerIcon} />
         </Video>
 
         <Content>
-          <Title>Introdução à teoria matemática</Title>
+          <Title>{lesson.name}</Title>
 
           <LessonInfo>
-            <LessonName>Aula 01</LessonName>
+            <LessonName>Aula {index + 1}</LessonName>
 
             <Duration>
               <FiClock name="clock" size={14} />
-              <DurationText>5min</DurationText>
+              <DurationText>{lesson.duration / 60} min</DurationText>
             </Duration>
           </LessonInfo>
 
-          <Descripition>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam luctus
-            condimentum gravida. Aenean condimentum vehicula sapien, eleifend
-            metus congue vel. Suspendisse vitae tellus eu lacus facilisis auctor
-            nec tristique eros.
-          </Descripition>
+          <Descripition>{lesson.description}</Descripition>
 
           <ButtonWrapper>
-            <BackButton>
-              <Icon name="arrow-left" size={20} color="#FF6680" />
-              <BackButtonText>Aula anterior</BackButtonText>
+            <BackButton
+              enabled={!!previousLesson}
+              onPress={() =>
+                navigateToLesson(previousLesson.id, index - 1, lessons)
+              }
+            >
+              <Icon
+                name="arrow-left"
+                size={20}
+                color={previousLesson ? '#ff6680' : '#c4c4d1'}
+              />
+              <BackButtonText isEnabled={!!previousLesson}>
+                Aula anterior
+              </BackButtonText>
             </BackButton>
 
-            <ForwardButton>
+            <ForwardButton
+              enabled={!!nextLesson}
+              isEnabled={!!nextLesson}
+              onPress={() =>
+                navigateToLesson(nextLesson.id, index + 1, lessons)
+              }
+            >
               <ForwardButtonText>Próxima aula</ForwardButtonText>
               <Icon name="arrow-right" size={20} color="#fff" />
             </ForwardButton>
