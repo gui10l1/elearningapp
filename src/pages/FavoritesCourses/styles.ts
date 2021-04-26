@@ -1,6 +1,9 @@
 import styled from 'styled-components/native';
 import { RectButton } from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/Feather';
+import { FlatList } from 'react-native';
+
+import { ICourse } from '.';
 
 export const Header = styled.View`
   width: 100%;
@@ -47,7 +50,7 @@ export const ContainerHeaderText = styled.Text`
   color: #3d3d4c;
 `;
 
-export const Courses = styled.ScrollView`
+export const Courses = styled(FlatList as new () => FlatList<ICourse>)`
   margin-top: 8px;
   margin-bottom: 80px;
 
@@ -66,7 +69,6 @@ export const Course = styled.View`
 
   padding: 24px 25px;
 
-  margin-left: 16px;
   margin-top: 18px;
 
   position: relative;

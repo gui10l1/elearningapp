@@ -1,7 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Image, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { getMacAddress } from 'react-native-device-info';
 import Icon from 'react-native-vector-icons/Feather';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import elearningLogo from '../../assets/elearninglogo.png';
 import playerIcon from '../../assets/player.png';
@@ -12,6 +15,7 @@ import {
   ContainerHeaderText,
   CoursesQuantityText,
   LessonsList,
+  NoClassesFoundMessage,
   Lesson,
   ButtonPlayer,
   LessonContent,
@@ -24,6 +28,7 @@ import {
 } from './styles';
 import api from '../../services/elearningApi';
 import { useLessons } from '../../hooks/lessons';
+import { useFavoriteCourses } from '../../hooks/favorites';
 
 interface IParams {
   id: string;
@@ -41,13 +46,17 @@ interface IResponse extends ILesson {
 }
 
 interface ICourse {
+  id: string;
   name: string;
+  image: string;
 }
 
 const Lessons: React.FC = () => {
+  const [isFavorite, setIsFavorite] = useState(false);
   const [course, setCourse] = useState<ICourse>();
   const [lessons, setLessons] = useState<Array<ILesson>>();
 
+  const { addFavoriteCourse } = useFavoriteCourses();
   const { completedLessons: completed } = useLessons();
   const { navigate } = useNavigation();
   const { params } = useRoute();
@@ -60,21 +69,29 @@ const Lessons: React.FC = () => {
 
       const { data } = await api.get<Array<IResponse>>(`/course-lessons/${id}`);
       const { data: courseFromApi } = await api.get(`courses/${id}`);
-      const parsedResponse: IResponse[] = data.map(item => {
-        return {
-          completed: item.completed,
-          course_id: item.course_id,
-          duration: item.duration,
-          id: item.id,
-          name: item.name,
-        };
-      });
+      const macAddress = await getMacAddress();
+
+      const findCourseInAsyncStorage = await AsyncStorage.getItem(
+        `${macAddress}-favorite-courses`,
+      );
+
+      if (findCourseInAsyncStorage) {
+        const parsedData = JSON.parse(
+          findCourseInAsyncStorage,
+        ) as Array<ICourse>;
+
+        const findCourse = parsedData.find(
+          item => item.id === courseFromApi.id,
+        );
+
+        setIsFavorite(!!findCourse);
+      }
 
       const completedLessons = completed.filter(item => item.course_id === id);
 
-      parsedResponse.map(item => {
+      data.map(item => {
         const find = completedLessons.find(
-          anotherItem => anotherItem.id === item.id,
+          findCourse => findCourse.id === item.id,
         );
 
         if (find) {
@@ -106,7 +123,7 @@ const Lessons: React.FC = () => {
     [navigate],
   );
 
-  if (!lessons) {
+  if (!lessons || !course) {
     return <View />;
   }
 
@@ -121,7 +138,12 @@ const Lessons: React.FC = () => {
           onPress={navigateToHome}
         />
         <Image source={elearningLogo} />
-        <Icon name="heart" color="#FF6680" size={24} />
+        <MaterialIcons
+          name={isFavorite ? 'favorite' : 'favorite-border'}
+          size={24}
+          color="#FF6680"
+          onPress={() => addFavoriteCourse(course)}
+        />
       </Header>
 
       <Container>
@@ -134,38 +156,42 @@ const Lessons: React.FC = () => {
           </CoursesQuantityText>
         </ContainerHeader>
 
-        <LessonsList
-          data={lessons}
-          renderItem={({ item, index }) => {
-            return (
-              <Lesson>
-                <ButtonPlayer
-                  isFinished={!!item.completed}
-                  onPress={() => navigateToLesson(item.id, index, lessons)}
-                >
-                  <Image source={playerIcon} />
-                </ButtonPlayer>
+        {lessons.length !== 0 ? (
+          <LessonsList
+            data={lessons}
+            renderItem={({ item, index }) => {
+              return (
+                <Lesson>
+                  <ButtonPlayer
+                    isFinished={!!item.completed}
+                    onPress={() => navigateToLesson(item.id, index, lessons)}
+                  >
+                    <Image source={playerIcon} />
+                  </ButtonPlayer>
 
-                <LessonContent>
-                  <LessonTitle>{item.name}</LessonTitle>
+                  <LessonContent>
+                    <LessonTitle>{item.name}</LessonTitle>
 
-                  <LessonDescription>
-                    <View style={{ flexDirection: 'row' }}>
-                      <LessonDescriptionText>
-                        Aula {index + 1}
-                      </LessonDescriptionText>
-                      <Duration>
-                        <Icon name="clock" size={10} color="#C4C4D1" />
-                        <DurationText>{item.duration / 60} min</DurationText>
-                      </Duration>
-                    </View>
-                    {item.completed && <Badge>Completo!</Badge>}
-                  </LessonDescription>
-                </LessonContent>
-              </Lesson>
-            );
-          }}
-        />
+                    <LessonDescription>
+                      <View style={{ flexDirection: 'row' }}>
+                        <LessonDescriptionText>
+                          Aula {index + 1}
+                        </LessonDescriptionText>
+                        <Duration>
+                          <Icon name="clock" size={10} color="#C4C4D1" />
+                          <DurationText>{item.duration / 60} min</DurationText>
+                        </Duration>
+                      </View>
+                      {item.completed && <Badge>Completo!</Badge>}
+                    </LessonDescription>
+                  </LessonContent>
+                </Lesson>
+              );
+            }}
+          />
+        ) : (
+          <NoClassesFoundMessage>Nenhuma aula encontrada</NoClassesFoundMessage>
+        )}
       </Container>
     </>
   );

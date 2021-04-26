@@ -5,7 +5,6 @@ import { Form } from '@unform/mobile';
 import Icon from 'react-native-vector-icons/Feather';
 
 import elearningLogo from '../../assets/elearninglogo.png';
-import math from '../../assets/Math.png';
 import Input from '../../components/Input';
 import {
   Header,
@@ -26,9 +25,17 @@ import {
   FavoritesText,
   Line,
 } from './styles';
+import { useFavoriteCourses } from '../../hooks/favorites';
+
+export interface ICourse {
+  id: string;
+  name: string;
+  image: string;
+}
 
 const FavoritesCourses: React.FC = () => {
   const { navigate } = useNavigation();
+  const { favoriteCourses, removeFavoriteCourse } = useFavoriteCourses();
 
   const navigateToHome = useCallback(() => {
     navigate('Home');
@@ -58,71 +65,26 @@ const FavoritesCourses: React.FC = () => {
         </ContainerHeader>
 
         <Courses
-          contentContainerStyle={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-          }}
-        >
-          <Course style={{ marginLeft: 0 }}>
-            <FiTrash name="trash" color="#C4C4D1" size={21} />
+          data={favoriteCourses}
+          keyExtractor={course => course.id}
+          contentContainerStyle={{ flexWrap: 'wrap', flexDirection: 'row' }}
+          renderItem={({ index, item }) => (
+            <Course style={{ marginLeft: index % 2 === 0 ? 0 : 17 }}>
+              <FiTrash
+                name="trash"
+                color="#C4C4D1"
+                size={21}
+                onPress={() => removeFavoriteCourse(item.id)}
+              />
 
-            <CourseImage source={math} />
+              <CourseImage source={{ uri: item.image }} />
 
-            <CourseName>Matemática</CourseName>
+              <CourseName>{item.name}</CourseName>
 
-            <CourseQuantity>16 aulas</CourseQuantity>
-          </Course>
-
-          <Course>
-            <FiTrash name="trash" color="#C4C4D1" size={21} />
-
-            <CourseImage source={math} />
-
-            <CourseName>Matemática</CourseName>
-
-            <CourseQuantity>16 aulas</CourseQuantity>
-          </Course>
-
-          <Course style={{ marginLeft: 0 }}>
-            <FiTrash name="trash" color="#C4C4D1" size={21} />
-
-            <CourseImage source={math} />
-
-            <CourseName>Matemática</CourseName>
-
-            <CourseQuantity>16 aulas</CourseQuantity>
-          </Course>
-
-          <Course>
-            <FiTrash name="trash" color="#C4C4D1" size={21} />
-
-            <CourseImage source={math} />
-
-            <CourseName>Matemática</CourseName>
-
-            <CourseQuantity>16 aulas</CourseQuantity>
-          </Course>
-
-          <Course style={{ marginLeft: 0 }}>
-            <FiTrash name="trash" color="#C4C4D1" size={21} />
-
-            <CourseImage source={math} />
-
-            <CourseName>Matemática</CourseName>
-
-            <CourseQuantity>16 aulas</CourseQuantity>
-          </Course>
-
-          <Course>
-            <FiTrash name="trash" color="#C4C4D1" size={21} />
-
-            <CourseImage source={math} />
-
-            <CourseName>Matemática</CourseName>
-
-            <CourseQuantity>16 aulas</CourseQuantity>
-          </Course>
-        </Courses>
+              <CourseQuantity>5</CourseQuantity>
+            </Course>
+          )}
+        />
       </Container>
 
       <ContainerFooter>
