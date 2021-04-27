@@ -94,8 +94,18 @@ export const ButtonPlayer = styled(RectButton)<IPlayerButtonProps>`
   z-index: 1;
 `;
 
+export const NoClassesFoundMessage = styled.Text`
+  font-size: 18px;
+  font-family: 'Roboto-Regular';
+  color: #6c6c80;
+
+  margin-top: 16px;
+`;
+
 export const LessonContent = styled.View`
   flex: 1;
+
+  justify-content: space-between;
 
   height: 100%;
   background-color: #fff;

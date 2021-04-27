@@ -16,12 +16,15 @@ import {
 } from './styles';
 
 const SignIn: React.FC = () => {
+  // Hooks
   const { navigate } = useNavigation();
 
+  // Handle navigation to home page
   const pushToHome = useCallback(() => {
     navigate('Home');
   }, [navigate]);
 
+  // Screen
   return (
     <Container>
       <ImageWrapper>

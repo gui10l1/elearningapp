@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Image, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 import elearningLogo from '../../assets/elearninglogo.png';
 import playerIcon from '../../assets/player.png';
@@ -12,6 +13,7 @@ import {
   ContainerHeaderText,
   CoursesQuantityText,
   LessonsList,
+  NoClassesFoundMessage,
   Lesson,
   ButtonPlayer,
   LessonContent,
@@ -23,7 +25,11 @@ import {
   Badge,
 } from './styles';
 import api from '../../services/elearningApi';
+import { useLessons } from '../../hooks/lessons';
+import { useFavoriteCourses } from '../../hooks/favorites';
+import LoadingScreen from '../../components/LoadingScreen';
 
+// Interfaces
 interface IParams {
   id: string;
 }
@@ -31,35 +37,98 @@ interface IParams {
 export interface ILesson {
   id: string;
   name: string;
-  description: string;
   duration: number;
+  completed: boolean;
+}
+
+interface IResponse extends ILesson {
+  course_id: string;
+}
+
+interface ICourse {
+  id: string;
+  name: string;
+  image: string;
 }
 
 const Lessons: React.FC = () => {
+  // States
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [course, setCourse] = useState<ICourse>();
   const [lessons, setLessons] = useState<Array<ILesson>>();
 
+  // Hooks
+  const { addFavoriteCourse, favoriteCourses } = useFavoriteCourses();
+  const { completedLessons: completed } = useLessons();
   const { navigate } = useNavigation();
   const { params } = useRoute();
+
+  // Route params
   const { id } = params as IParams;
 
+  // Load lessons from API and filter which one is completed or not
+  useEffect(() => {
+    async function loadLessons() {
+      const lessonsFiltered: ILesson[] = [];
+
+      const { data } = await api.get<Array<IResponse>>(`/course-lessons/${id}`);
+      const { data: courseFromApi } = await api.get(`courses/${id}`);
+
+      if (favoriteCourses.length > 0) {
+        const findCourse = favoriteCourses.find(
+          item => item.id === courseFromApi.id,
+        );
+
+        setIsFavorite(!!findCourse);
+      }
+
+      const completedLessons = completed.filter(item => item.course_id === id);
+
+      data.map(item => {
+        const find = completedLessons.find(
+          findCourse => findCourse.id === item.id,
+        );
+
+        if (find) {
+          lessonsFiltered.push(find);
+          return find;
+        }
+
+        lessonsFiltered.push(item);
+        return item;
+      });
+
+      setLessons(lessonsFiltered);
+      setCourse(courseFromApi);
+    }
+
+    loadLessons();
+  }, [id, completed, favoriteCourses]);
+
+  // Navigation to home screen
   const navigateToHome = useCallback(() => {
     navigate('Home');
   }, [navigate]);
 
-  const navigateToLesson = useCallback(() => {
-    navigate('Lesson');
-  }, [navigate]);
+  // Navigate to lesson screen
+  const navigateToLesson = useCallback(
+    (lessonId: string, lessonIndex: number, lessonsList: Array<ILesson>) => {
+      navigate('Lesson', {
+        id: lessonId,
+        lessonIndex,
+        lessons: lessonsList,
+        course,
+      });
+    },
+    [navigate, course],
+  );
 
-  useEffect(() => {
-    async function loadLessons() {
-      const { data } = await api.get(`/course-lessons/${id}`);
+  // Loading
+  if (!lessons || !course) {
+    return <LoadingScreen />;
+  }
 
-      setLessons(data);
-    }
-
-    loadLessons();
-  }, [id]);
-
+  // Screen
   return (
     <>
       <Header>
@@ -70,44 +139,60 @@ const Lessons: React.FC = () => {
           onPress={navigateToHome}
         />
         <Image source={elearningLogo} />
-        <Icon name="heart" color="#FF6680" size={24} />
+        <MaterialIcons
+          name={isFavorite ? 'favorite' : 'favorite-border'}
+          size={24}
+          color="#FF6680"
+          onPress={() => addFavoriteCourse(course)}
+        />
       </Header>
 
       <Container>
         <ContainerHeader>
-          <ContainerHeaderText>Matemática</ContainerHeaderText>
-          <CoursesQuantityText>15 aulas</CoursesQuantityText>
+          <ContainerHeaderText>{course?.name}</ContainerHeaderText>
+          <CoursesQuantityText>
+            {lessons?.length === 1
+              ? `${lessons.length} aula`
+              : `${lessons?.length} aulas`}
+          </CoursesQuantityText>
         </ContainerHeader>
 
-        <LessonsList
-          data={lessons}
-          renderItem={({ item, index }) => {
-            return (
-              <Lesson>
-                <ButtonPlayer isFinished onPress={navigateToLesson}>
-                  <Image source={playerIcon} />
-                </ButtonPlayer>
+        {lessons.length !== 0 ? (
+          <LessonsList
+            data={lessons}
+            renderItem={({ item, index }) => {
+              return (
+                <Lesson>
+                  <ButtonPlayer
+                    isFinished={!!item.completed}
+                    onPress={() => navigateToLesson(item.id, index, lessons)}
+                  >
+                    <Image source={playerIcon} />
+                  </ButtonPlayer>
 
-                <LessonContent>
-                  <LessonTitle>{item.name}</LessonTitle>
+                  <LessonContent>
+                    <LessonTitle>{item.name}</LessonTitle>
 
-                  <LessonDescription>
-                    <View style={{ flexDirection: 'row' }}>
-                      <LessonDescriptionText>
-                        Aula {index + 1}
-                      </LessonDescriptionText>
-                      <Duration>
-                        <Icon name="clock" size={10} color="#C4C4D1" />
-                        <DurationText>{item.duration / 60} min</DurationText>
-                      </Duration>
-                    </View>
-                    <Badge>Completo!</Badge>
-                  </LessonDescription>
-                </LessonContent>
-              </Lesson>
-            );
-          }}
-        />
+                    <LessonDescription>
+                      <View style={{ flexDirection: 'row' }}>
+                        <LessonDescriptionText>
+                          Aula {index + 1}
+                        </LessonDescriptionText>
+                        <Duration>
+                          <Icon name="clock" size={10} color="#C4C4D1" />
+                          <DurationText>{item.duration / 60} min</DurationText>
+                        </Duration>
+                      </View>
+                      {item.completed && <Badge>Completo!</Badge>}
+                    </LessonDescription>
+                  </LessonContent>
+                </Lesson>
+              );
+            }}
+          />
+        ) : (
+          <NoClassesFoundMessage>Nenhuma aula encontrada</NoClassesFoundMessage>
+        )}
       </Container>
     </>
   );
