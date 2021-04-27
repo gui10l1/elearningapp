@@ -13,7 +13,7 @@ interface IInputValueRef {
   value: string;
 }
 
-const Input: React.FC<IInputProps> = ({ name, icon, ...rest }) => {
+const FormInput: React.FC<IInputProps> = ({ name, icon, ...rest }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isFilled, setIsFilled] = useState(false);
 
@@ -73,4 +73,4 @@ const Input: React.FC<IInputProps> = ({ name, icon, ...rest }) => {
   );
 };
 
-export default Input;
+export default FormInput;

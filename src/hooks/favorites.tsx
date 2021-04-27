@@ -14,10 +14,6 @@ interface ICourse {
   image: string;
 }
 
-interface IState {
-  courses: Array<ICourse>;
-}
-
 interface IFavoritesContext {
   favoriteCourses: Array<ICourse>;
   addFavoriteCourse(course: ICourse): Promise<void>;
@@ -29,7 +25,7 @@ const FavoriteCoursesContext = createContext<IFavoritesContext>(
 );
 
 export const FavoriteCoursesProvider: React.FC = ({ children }) => {
-  const [courses, setCourses] = useState<IState>({} as IState);
+  const [courses, setCourses] = useState<Array<ICourse>>([]);
 
   useEffect(() => {
     async function loadCourses() {
@@ -40,14 +36,15 @@ export const FavoriteCoursesProvider: React.FC = ({ children }) => {
       );
 
       if (asyncStorageData) {
-        const parsedAsyncStorageData = JSON.parse(
-          asyncStorageData,
-        ) as Array<ICourse>;
+        const parsedAsyncStorageData = JSON.parse(asyncStorageData) as {
+          courses: Array<ICourse>;
+        };
 
-        setCourses({ courses: parsedAsyncStorageData });
+        setCourses(parsedAsyncStorageData.courses);
+        return;
       }
 
-      setCourses({} as IState);
+      setCourses([]);
     }
 
     loadCourses();
@@ -55,25 +52,25 @@ export const FavoriteCoursesProvider: React.FC = ({ children }) => {
 
   const addFavoriteCourse = useCallback(
     async (course: ICourse): Promise<void> => {
-      return AsyncStorage.clear();
       const macAddress = await getMacAddress();
       const oldStoragedData = await AsyncStorage.getItem(
         `${macAddress}-favorite-courses`,
       );
 
       if (oldStoragedData) {
-        const parsedStoragedData = JSON.parse(
-          oldStoragedData,
-        ) as Array<ICourse>;
+        const parsedStoragedData = JSON.parse(oldStoragedData) as {
+          courses: Array<ICourse>;
+        };
 
-        parsedStoragedData.push(course);
+        parsedStoragedData.courses.push(course);
 
-        await AsyncStorage.mergeItem(
+        await AsyncStorage.removeItem(`${macAddress}-favorite-courses`);
+        await AsyncStorage.setItem(
           `${macAddress}-favorite-courses`,
-          JSON.stringify({ courses: parsedStoragedData }),
+          JSON.stringify({ courses: parsedStoragedData.courses }),
         );
 
-        setCourses({ courses: parsedStoragedData });
+        setCourses(parsedStoragedData.courses);
         return;
       }
 
@@ -84,7 +81,7 @@ export const FavoriteCoursesProvider: React.FC = ({ children }) => {
         JSON.stringify({ courses: dataToBeStoraged }),
       );
 
-      setCourses({ courses: dataToBeStoraged });
+      setCourses(dataToBeStoraged);
     },
     [],
   );
@@ -99,22 +96,27 @@ export const FavoriteCoursesProvider: React.FC = ({ children }) => {
       return;
     }
 
-    const parsedDataStoraged = JSON.parse(dataStoraged) as Array<ICourse>;
+    const parsedDataStoraged = JSON.parse(dataStoraged) as {
+      courses: Array<ICourse>;
+    };
 
-    const newDataToBeStoraged = parsedDataStoraged.filter(
+    const newDataToBeStoraged = parsedDataStoraged.courses.filter(
       course => course.id !== courseId,
     );
 
-    await AsyncStorage.mergeItem(
+    await AsyncStorage.removeItem(`${macAddress}-favorite-courses`);
+    await AsyncStorage.setItem(
       `${macAddress}-favorite-courses`,
       JSON.stringify({ courses: newDataToBeStoraged }),
     );
+
+    setCourses(newDataToBeStoraged);
   }, []);
 
   return (
     <FavoriteCoursesContext.Provider
       value={{
-        favoriteCourses: courses.courses,
+        favoriteCourses: courses,
         addFavoriteCourse,
         removeFavoriteCourse,
       }}

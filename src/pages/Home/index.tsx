@@ -1,11 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Icon from 'react-native-vector-icons/Feather';
-import { Form } from '@unform/mobile';
 import { Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 import elearningLogo from '../../assets/elearninglogo.png';
-import Input from '../../components/Input';
+import SearchInput from '../../components/SearchInput';
 import {
   Header,
   HeaderLogo,
@@ -27,6 +26,7 @@ import {
 } from './styles';
 import api from '../../services/elearningApi';
 
+// Interfaces
 interface ILesson {
   id: string;
 }
@@ -39,8 +39,12 @@ export interface ICourse {
 }
 
 const Home: React.FC = () => {
+  // States
   const [courses, setCourses] = useState<ICourse[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<ICourse[]>([]);
+  const [searchString, setSearchString] = useState('');
 
+  // Hooks
   const { navigate } = useNavigation();
 
   // Load courses from API
@@ -49,6 +53,7 @@ const Home: React.FC = () => {
       const { data } = await api.get<Array<ICourse>>('/courses');
 
       setCourses(data);
+      setFilteredCourses(data);
     }
 
     loadCourses();
@@ -56,8 +61,19 @@ const Home: React.FC = () => {
 
   // Handle search
   const handleSubmitSearch = useCallback(() => {
-    // CODE
-  }, []);
+    if (!searchString) {
+      setFilteredCourses(courses);
+      return;
+    }
+
+    const filtered = courses.filter(
+      course =>
+        course.name &&
+        course.name.toLowerCase().includes(searchString.toLowerCase()),
+    );
+
+    setFilteredCourses(filtered);
+  }, [searchString, courses]);
 
   // Navigate to favorite courses screen
   const navigateToFavoriteCourses = useCallback(() => {
@@ -82,9 +98,12 @@ const Home: React.FC = () => {
           <Icon name="power" color="#FF6680" size={24} />
         </HeaderLogo>
 
-        <Form onSubmit={handleSubmitSearch}>
-          <Input name="search" icon="search" placeholder="Busque um curso" />
-        </Form>
+        <SearchInput
+          icon="search"
+          placeholder="Busque um curso"
+          onKeyPress={handleSubmitSearch}
+          onChangeText={value => setSearchString(value)}
+        />
       </Header>
 
       <Container>
@@ -94,19 +113,23 @@ const Home: React.FC = () => {
         </ContainerHeader>
 
         <Courses
-          data={courses}
+          data={filteredCourses}
           keyExtractor={course => course.id}
           contentContainerStyle={{ flexWrap: 'wrap', flexDirection: 'row' }}
           renderItem={({ index, item }) => {
-            const restIndex = index % 2;
+            const calculateRestByIndex = index % 2;
 
-            if (restIndex === 0) {
+            if (calculateRestByIndex === 0) {
               return (
                 <Course
                   style={{ marginLeft: 0 }}
                   onPress={() => navigateToLessons(item.id)}
                 >
-                  <CourseImage source={{ uri: item.image }} />
+                  <CourseImage
+                    source={{
+                      uri: item.image,
+                    }}
+                  />
 
                   <CourseName>{item.name}</CourseName>
 
@@ -117,7 +140,11 @@ const Home: React.FC = () => {
 
             return (
               <Course onPress={() => navigateToLessons(item.id)}>
-                <CourseImage source={{ uri: item.image }} />
+                <CourseImage
+                  source={{
+                    uri: item.image,
+                  }}
+                />
 
                 <CourseName>{item.name}</CourseName>
 

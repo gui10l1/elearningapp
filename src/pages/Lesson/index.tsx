@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
-import { Image, View } from 'react-native';
+import { Image } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 // import YoutubePlayer from 'react-native-youtube-iframe';
 
 import elearningLogo from '../../assets/elearninglogo.png';
@@ -27,9 +28,14 @@ import {
 } from './styles';
 import api from '../../services/elearningApi';
 import { useLessons } from '../../hooks/lessons';
+import { useFavoriteCourses } from '../../hooks/favorites';
+import { ICourse } from '../Home';
+import LoadingScreen from '../../components/LoadingScreen';
 
+// Interfaces
 interface IRouteParams {
   id: string;
+  course: ICourse;
   lessonIndex: number;
   lessons: Array<ILesson>;
 }
@@ -44,17 +50,29 @@ interface ILesson {
 }
 
 const Lesson: React.FC = () => {
+  // States
+  const [isFavorite, setIsFavorite] = useState(false);
   const [lesson, setLesson] = useState<ILesson>();
 
+  // Hooks
+  const { addFavoriteCourse, favoriteCourses } = useFavoriteCourses();
   const { saveCompletedLesson } = useLessons();
   const { params } = useRoute();
   const { navigate } = useNavigation();
-  const { id, lessonIndex: index, lessons } = params as IRouteParams;
+
+  // Route params
+  const { id, lessonIndex: index, lessons, course } = params as IRouteParams;
 
   // Load lesson from API
   useEffect(() => {
     async function loadLesson() {
       const { data } = await api.get(`/lessons/${id}`);
+
+      if (favoriteCourses.length > 0) {
+        const findCourse = favoriteCourses.find(item => item.id === course.id);
+
+        setIsFavorite(!!findCourse);
+      }
 
       setLesson({
         description: data.description,
@@ -67,7 +85,7 @@ const Lesson: React.FC = () => {
     }
 
     loadLesson();
-  }, [id]);
+  }, [id, course, favoriteCourses]);
 
   // Navigate to lessons screen
   const navigateToLessons = useCallback(() => {
@@ -94,7 +112,7 @@ const Lesson: React.FC = () => {
 
   // Loading screen
   if (!lesson) {
-    return <View />;
+    return <LoadingScreen />;
   }
 
   // Screen
@@ -108,7 +126,12 @@ const Lesson: React.FC = () => {
           onPress={navigateToLessons}
         />
         <Image source={elearningLogo} />
-        <Icon name="heart" color="#FF6680" size={24} />
+        <MaterialIcons
+          name={isFavorite ? 'favorite' : 'favorite-border'}
+          size={24}
+          color="#FF6680"
+          onPress={() => addFavoriteCourse(course)}
+        />
       </Header>
 
       <Container>

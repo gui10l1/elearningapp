@@ -1,10 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Image, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { getMacAddress } from 'react-native-device-info';
 import Icon from 'react-native-vector-icons/Feather';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import elearningLogo from '../../assets/elearninglogo.png';
 import playerIcon from '../../assets/player.png';
@@ -29,7 +27,9 @@ import {
 import api from '../../services/elearningApi';
 import { useLessons } from '../../hooks/lessons';
 import { useFavoriteCourses } from '../../hooks/favorites';
+import LoadingScreen from '../../components/LoadingScreen';
 
+// Interfaces
 interface IParams {
   id: string;
 }
@@ -52,14 +52,18 @@ interface ICourse {
 }
 
 const Lessons: React.FC = () => {
+  // States
   const [isFavorite, setIsFavorite] = useState(false);
   const [course, setCourse] = useState<ICourse>();
   const [lessons, setLessons] = useState<Array<ILesson>>();
 
-  const { addFavoriteCourse } = useFavoriteCourses();
+  // Hooks
+  const { addFavoriteCourse, favoriteCourses } = useFavoriteCourses();
   const { completedLessons: completed } = useLessons();
   const { navigate } = useNavigation();
   const { params } = useRoute();
+
+  // Route params
   const { id } = params as IParams;
 
   // Load lessons from API and filter which one is completed or not
@@ -69,18 +73,9 @@ const Lessons: React.FC = () => {
 
       const { data } = await api.get<Array<IResponse>>(`/course-lessons/${id}`);
       const { data: courseFromApi } = await api.get(`courses/${id}`);
-      const macAddress = await getMacAddress();
 
-      const findCourseInAsyncStorage = await AsyncStorage.getItem(
-        `${macAddress}-favorite-courses`,
-      );
-
-      if (findCourseInAsyncStorage) {
-        const parsedData = JSON.parse(
-          findCourseInAsyncStorage,
-        ) as Array<ICourse>;
-
-        const findCourse = parsedData.find(
+      if (favoriteCourses.length > 0) {
+        const findCourse = favoriteCourses.find(
           item => item.id === courseFromApi.id,
         );
 
@@ -108,7 +103,7 @@ const Lessons: React.FC = () => {
     }
 
     loadLessons();
-  }, [id, completed]);
+  }, [id, completed, favoriteCourses]);
 
   // Navigation to home screen
   const navigateToHome = useCallback(() => {
@@ -118,13 +113,19 @@ const Lessons: React.FC = () => {
   // Navigate to lesson screen
   const navigateToLesson = useCallback(
     (lessonId: string, lessonIndex: number, lessonsList: Array<ILesson>) => {
-      navigate('Lesson', { id: lessonId, lessonIndex, lessons: lessonsList });
+      navigate('Lesson', {
+        id: lessonId,
+        lessonIndex,
+        lessons: lessonsList,
+        course,
+      });
     },
-    [navigate],
+    [navigate, course],
   );
 
+  // Loading
   if (!lessons || !course) {
-    return <View />;
+    return <LoadingScreen />;
   }
 
   // Screen

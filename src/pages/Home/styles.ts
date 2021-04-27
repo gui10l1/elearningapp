@@ -82,6 +82,8 @@ export const CourseImage = styled.Image`
   width: 64px;
 
   margin-bottom: 20px;
+
+  border-radius: 10px;
 `;
 
 export const CourseName = styled.Text`
