@@ -30,3 +30,7 @@ This project was made with React Native + Typescript.
 ## Server side
 
 The server side for this app can be found [here](https://github.com/gui10l1/e-learning-api).
+
+To connect with the server side of this app you need to check the base URL 
+that is found at **src > services > elearningApi.ts**. This file makes the 
+connection between the server-side and the frontend.
