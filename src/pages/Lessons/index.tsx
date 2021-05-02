@@ -60,7 +60,7 @@ const Lessons: React.FC = () => {
   // Hooks
   const { addFavoriteCourse, favoriteCourses } = useFavoriteCourses();
   const { completedLessons: completed } = useLessons();
-  const { navigate } = useNavigation();
+  const { goBack, navigate } = useNavigation();
   const { params } = useRoute();
 
   // Route params
@@ -106,9 +106,9 @@ const Lessons: React.FC = () => {
   }, [id, completed, favoriteCourses]);
 
   // Navigation to home screen
-  const navigateToHome = useCallback(() => {
-    navigate('Home');
-  }, [navigate]);
+  const navigateBack = useCallback(() => {
+    goBack();
+  }, [goBack]);
 
   // Navigate to lesson screen
   const navigateToLesson = useCallback(
@@ -136,7 +136,7 @@ const Lessons: React.FC = () => {
           name="arrow-left"
           color="#FF6680"
           size={24}
-          onPress={navigateToHome}
+          onPress={navigateBack}
         />
         <Image source={elearningLogo} />
         <MaterialIcons

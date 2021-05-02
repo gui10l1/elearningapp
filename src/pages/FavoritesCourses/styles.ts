@@ -1,9 +1,13 @@
-import styled from 'styled-components/native';
+import styled, { css } from 'styled-components/native';
 import { RectButton } from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/Feather';
-import { FlatList } from 'react-native';
+import { FlatList, Pressable } from 'react-native';
 
 import { ICourse } from '.';
+
+interface IModalButtonProps {
+  type: 'dismiss' | 'accept';
+}
 
 export const Header = styled.View`
   width: 100%;
@@ -59,7 +63,11 @@ export const Courses = styled(FlatList as new () => FlatList<ICourse>)`
   flex: 1;
 `;
 
-export const Course = styled.View`
+export const CourseContainer = styled.View`
+  position: relative;
+`;
+
+export const Course = styled.TouchableOpacity`
   width: 156px;
   height: 172px;
 
@@ -71,13 +79,15 @@ export const Course = styled.View`
 
   margin-top: 18px;
 
-  position: relative;
+  z-index: 15;
 `;
 
 export const FiTrash = styled(Icon)`
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 30px;
+  right: 12px;
+
+  z-index: 20;
 `;
 
 export const CourseImage = styled.Image`
@@ -151,4 +161,70 @@ export const Line = styled.View`
   height: 2px;
   width: 100%;
   background-color: #ff6680;
+`;
+
+export const ModalContainer = styled.View`
+  flex: 1;
+
+  background-color: rgba(0, 0, 0, 0.2);
+
+  align-items: center;
+  justify-content: center;
+`;
+
+export const ModalContent = styled.View`
+  width: 277px;
+  height: 242px;
+
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 32px;
+
+  background-color: #fff;
+
+  border-radius: 16px;
+`;
+
+export const ModalText = styled.Text`
+  color: #6c6c80;
+  font-family: 'Rubik-Regular';
+  font-size: 15px;
+
+  text-align: center;
+`;
+
+export const ButtonWrapper = styled.View`
+  width: 100%;
+
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+export const ModalButton = styled(Pressable)<IModalButtonProps>`
+  padding: 11px 24px;
+
+  border-radius: 100px;
+
+  background-color: transparent;
+
+  ${props =>
+    props.type === 'accept' &&
+    css`
+      background-color: #ff6680;
+    `}
+`;
+
+export const AcceptButtonText = styled.Text`
+  font-size: 15px;
+  font-family: 'Roboto-Regular';
+  color: #fff;
+`;
+
+export const DismissButtonText = styled.Text`
+  font-size: 15px;
+  font-family: 'Roboto-Regular';
+  color: #ff6680;
 `;

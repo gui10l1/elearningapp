@@ -27,6 +27,7 @@ interface IAsyncStorageData {
 
 interface ILessonsContext {
   completedLessons: Array<ILesson>;
+  loading: boolean;
   saveCompletedLesson(lessonId: string, courseId: string): Promise<void>;
 }
 
@@ -34,6 +35,7 @@ const LessonsContext = createContext<ILessonsContext>({} as ILessonsContext);
 
 export const LessonsProvider: React.FC = ({ children }) => {
   const [completedLessons, setCompletedLessons] = useState<Array<ILesson>>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadLessons() {
@@ -51,6 +53,7 @@ export const LessonsProvider: React.FC = ({ children }) => {
       );
 
       setCompletedLessons(completedLessonsFromStorage);
+      setLoading(false);
     }
 
     loadLessons();
@@ -58,8 +61,6 @@ export const LessonsProvider: React.FC = ({ children }) => {
 
   const saveCompletedLesson = useCallback(
     async (lessonId: string, courseId: string) => {
-      let duplicated = false;
-
       const macAddress = await getMacAddress();
       const oldData = await AsyncStorage.getItem(macAddress);
       const {
@@ -69,13 +70,11 @@ export const LessonsProvider: React.FC = ({ children }) => {
       if (oldData) {
         const parsedOldData = JSON.parse(oldData) as IAsyncStorageData[];
 
-        parsedOldData.forEach(lesson => {
-          if (lesson.id === lessonId) {
-            duplicated = true;
-          }
-        });
+        const findDuplicated = parsedOldData.find(
+          lesson => lesson.id === lessonId,
+        );
 
-        if (duplicated) {
+        if (findDuplicated) {
           return;
         }
 
@@ -111,7 +110,9 @@ export const LessonsProvider: React.FC = ({ children }) => {
   );
 
   return (
-    <LessonsContext.Provider value={{ saveCompletedLesson, completedLessons }}>
+    <LessonsContext.Provider
+      value={{ saveCompletedLesson, completedLessons, loading }}
+    >
       {children}
     </LessonsContext.Provider>
   );

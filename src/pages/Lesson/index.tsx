@@ -3,15 +3,12 @@ import { Image } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-// import YoutubePlayer from 'react-native-youtube-iframe';
+import YoutubePlayer from 'react-native-youtube-iframe';
 
 import elearningLogo from '../../assets/elearninglogo.png';
-import playerIcon from '../../assets/player.png';
 import {
   Header,
   Container,
-  Video,
-  PlayerImage,
   Content,
   Title,
   LessonInfo,
@@ -55,7 +52,11 @@ const Lesson: React.FC = () => {
   const [lesson, setLesson] = useState<ILesson>();
 
   // Hooks
-  const { addFavoriteCourse, favoriteCourses } = useFavoriteCourses();
+  const {
+    addFavoriteCourse,
+    favoriteCourses,
+    removeFavoriteCourse,
+  } = useFavoriteCourses();
   const { saveCompletedLesson } = useLessons();
   const { params } = useRoute();
   const { navigate } = useNavigation();
@@ -110,6 +111,18 @@ const Lesson: React.FC = () => {
     return lessons[index + 1];
   }, [lessons, index]);
 
+  const handleAddFinishedLesson = useCallback(
+    (state: string) => {
+      const lessonId = lesson?.id || 'id';
+      const lessonCourseId = lesson?.courseId || 'id';
+
+      if (state === 'ended') {
+        saveCompletedLesson(lessonId, lessonCourseId);
+      }
+    },
+    [lesson, saveCompletedLesson],
+  );
+
   // Loading screen
   if (!lesson) {
     return <LoadingScreen />;
@@ -126,19 +139,29 @@ const Lesson: React.FC = () => {
           onPress={navigateToLessons}
         />
         <Image source={elearningLogo} />
-        <MaterialIcons
-          name={isFavorite ? 'favorite' : 'favorite-border'}
-          size={24}
-          color="#FF6680"
-          onPress={() => addFavoriteCourse(course)}
-        />
+        {isFavorite ? (
+          <MaterialIcons
+            name="favorite"
+            size={24}
+            color="#FF6680"
+            onPress={() => addFavoriteCourse(course)}
+          />
+        ) : (
+          <MaterialIcons
+            name="favorite-border"
+            size={24}
+            color="#FF6680"
+            onPress={() => removeFavoriteCourse(course.id)}
+          />
+        )}
       </Header>
 
       <Container>
-        {/* <YoutubePlayer height={210} videoId="nPvuNsRccVw" /> */}
-        <Video onPress={() => saveCompletedLesson(lesson.id, lesson.courseId)}>
-          <PlayerImage source={playerIcon} />
-        </Video>
+        <YoutubePlayer
+          height={210}
+          videoId={lesson.videoId}
+          onChangeState={handleAddFinishedLesson}
+        />
 
         <Content>
           <Title>{lesson.name}</Title>

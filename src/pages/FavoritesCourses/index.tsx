@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Image } from 'react-native';
+import { Image, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 
@@ -11,6 +11,7 @@ import {
   ContainerHeader,
   ContainerHeaderText,
   Courses,
+  CourseContainer,
   Course,
   FiTrash,
   CourseImage,
@@ -22,6 +23,13 @@ import {
   Favorites,
   FavoritesText,
   Line,
+  ModalContainer,
+  ModalContent,
+  ModalText,
+  ButtonWrapper,
+  ModalButton,
+  DismissButtonText,
+  AcceptButtonText,
 } from './styles';
 import { useFavoriteCourses } from '../../hooks/favorites';
 import SearchInput from '../../components/SearchInput';
@@ -40,6 +48,8 @@ export interface ICourse {
 
 const FavoritesCourses: React.FC = () => {
   // States
+  const [courseToDelete, setCourseToDelete] = useState('');
+  const [modalVisibility, setModalVisibility] = useState(false);
   const [filteredCourses, setFilteredCourses] = useState<ICourse[]>([]);
   const [searchString, setSearchString] = useState('');
 
@@ -51,11 +61,6 @@ const FavoritesCourses: React.FC = () => {
   useEffect(() => {
     setFilteredCourses(favoriteCourses);
   }, [favoriteCourses]);
-
-  // Handle navigation to home screen
-  const navigateToHome = useCallback(() => {
-    navigate('Home');
-  }, [navigate]);
 
   // Handle search
   const handleSubmitSearch = useCallback(() => {
@@ -72,6 +77,31 @@ const FavoritesCourses: React.FC = () => {
 
     setFilteredCourses(filtered);
   }, [searchString, favoriteCourses]);
+
+  // Handle opening modal
+  const handleOpenModal = useCallback((courseId: string) => {
+    setCourseToDelete(courseId);
+    setModalVisibility(true);
+  }, []);
+
+  // Navigate to lessons list screen
+  const navigateToLessons = useCallback(
+    (id: string) => {
+      navigate('Lessons', { id });
+    },
+    [navigate],
+  );
+
+  // Handle deletion of a favorite course
+  const handleCourseDeletion = useCallback(() => {
+    removeFavoriteCourse(courseToDelete);
+    setModalVisibility(false);
+  }, [removeFavoriteCourse, courseToDelete]);
+
+  // Handle navigation to home screen
+  const navigateToHome = useCallback(() => {
+    navigate('Home');
+  }, [navigate]);
 
   // Screen
   return (
@@ -101,20 +131,24 @@ const FavoritesCourses: React.FC = () => {
           keyExtractor={course => course.id}
           contentContainerStyle={{ flexWrap: 'wrap', flexDirection: 'row' }}
           renderItem={({ index, item }) => (
-            <Course style={{ marginLeft: index % 2 === 0 ? 0 : 17 }}>
+            <CourseContainer>
               <FiTrash
                 name="trash"
                 color="#C4C4D1"
                 size={21}
-                onPress={() => removeFavoriteCourse(item.id)}
+                onPress={() => handleOpenModal(item.id)}
               />
+              <Course
+                style={{ marginLeft: index % 2 === 0 ? 0 : 17 }}
+                onPress={() => navigateToLessons(item.id)}
+              >
+                <CourseImage source={{ uri: item.image }} />
 
-              <CourseImage source={{ uri: item.image }} />
+                <CourseName>{item.name}</CourseName>
 
-              <CourseName>{item.name}</CourseName>
-
-              <CourseQuantity>{item.lessons?.length} aulas</CourseQuantity>
-            </Course>
+                <CourseQuantity>{item.lessons?.length} aulas</CourseQuantity>
+              </Course>
+            </CourseContainer>
           )}
         />
       </Container>
@@ -131,6 +165,33 @@ const FavoritesCourses: React.FC = () => {
           <FavoritesText>Salvos</FavoritesText>
         </Favorites>
       </ContainerFooter>
+
+      <Modal
+        visible={modalVisibility}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setModalVisibility(!modalVisibility)}
+      >
+        <ModalContainer>
+          <ModalContent>
+            <Icon name="trash" size={48} color="#ff6680" />
+            <ModalText>Quer excluir suas aulas desse curso?</ModalText>
+            <ButtonWrapper>
+              <ModalButton
+                type="dismiss"
+                onPress={() => setModalVisibility(!modalVisibility)}
+              >
+                <DismissButtonText>Não!</DismissButtonText>
+              </ModalButton>
+
+              <ModalButton type="accept" onPress={handleCourseDeletion}>
+                <AcceptButtonText>Com certeza</AcceptButtonText>
+              </ModalButton>
+            </ButtonWrapper>
+          </ModalContent>
+        </ModalContainer>
+      </Modal>
     </>
   );
 };
