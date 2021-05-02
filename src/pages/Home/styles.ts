@@ -54,6 +54,13 @@ export const CoursesQuantityText = styled.Text`
   color: #a0a0b2;
 `;
 
+export const Loading = styled.View`
+  flex: 1;
+
+  align-items: center;
+  justify-content: center;
+`;
+
 export const Courses = styled(FlatList as new () => FlatList<ICourse>)`
   margin-top: 8px;
   margin-bottom: 80px;
@@ -63,7 +70,7 @@ export const Courses = styled(FlatList as new () => FlatList<ICourse>)`
   flex: 1;
 `;
 
-export const Course = styled(RectButton)`
+export const Course = styled.TouchableOpacity`
   width: 156px;
   height: 172px;
 

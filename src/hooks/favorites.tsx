@@ -62,6 +62,14 @@ export const FavoriteCoursesProvider: React.FC = ({ children }) => {
           courses: Array<ICourse>;
         };
 
+        const findCourse = parsedStoragedData.courses.find(
+          find => find.id === course.id,
+        );
+
+        if (findCourse) {
+          return;
+        }
+
         parsedStoragedData.courses.push(course);
 
         await AsyncStorage.removeItem(`${macAddress}-favorite-courses`);

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Icon from 'react-native-vector-icons/Feather';
-import { Image } from 'react-native';
+import { Image, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 import elearningLogo from '../../assets/elearninglogo.png';
@@ -12,6 +12,7 @@ import {
   ContainerHeader,
   ContainerHeaderText,
   CoursesQuantityText,
+  Loading,
   Courses,
   Course,
   CourseImage,
@@ -40,6 +41,7 @@ export interface ICourse {
 
 const Home: React.FC = () => {
   // States
+  const [loading, setLoading] = useState(true);
   const [courses, setCourses] = useState<ICourse[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<ICourse[]>([]);
   const [searchString, setSearchString] = useState('');
@@ -54,6 +56,7 @@ const Home: React.FC = () => {
 
       setCourses(data);
       setFilteredCourses(data);
+      setLoading(false);
     }
 
     loadCourses();
@@ -112,17 +115,19 @@ const Home: React.FC = () => {
           <CoursesQuantityText>{courses.length} cursos</CoursesQuantityText>
         </ContainerHeader>
 
-        <Courses
-          data={filteredCourses}
-          keyExtractor={course => course.id}
-          contentContainerStyle={{ flexWrap: 'wrap', flexDirection: 'row' }}
-          renderItem={({ index, item }) => {
-            const calculateRestByIndex = index % 2;
-
-            if (calculateRestByIndex === 0) {
+        {loading ? (
+          <Loading>
+            <ActivityIndicator size={20} color="#ff6680" />
+          </Loading>
+        ) : (
+          <Courses
+            data={filteredCourses}
+            keyExtractor={course => course.id}
+            contentContainerStyle={{ flexWrap: 'wrap', flexDirection: 'row' }}
+            renderItem={({ index, item }) => {
               return (
                 <Course
-                  style={{ marginLeft: 0 }}
+                  style={{ marginLeft: index % 2 === 0 ? 0 : 16 }}
                   onPress={() => navigateToLessons(item.id)}
                 >
                   <CourseImage
@@ -136,23 +141,9 @@ const Home: React.FC = () => {
                   <CourseQuantity>{item.lessons.length} aulas</CourseQuantity>
                 </Course>
               );
-            }
-
-            return (
-              <Course onPress={() => navigateToLessons(item.id)}>
-                <CourseImage
-                  source={{
-                    uri: item.image,
-                  }}
-                />
-
-                <CourseName>{item.name}</CourseName>
-
-                <CourseQuantity>{item.lessons.length} aulas</CourseQuantity>
-              </Course>
-            );
-          }}
-        />
+            }}
+          />
+        )}
       </Container>
       <ContainerFooter>
         <HomeButton>
