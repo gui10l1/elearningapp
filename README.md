@@ -12,13 +12,14 @@ on online learning.
 ![Lesson Screen](https://gui10l1-github-projects.s3.amazonaws.com/lesson_screen.png)
 
 The users (whoever downloaded the app) can see the courses on the main screen
-and navigate into the lessons of which course, and the process is saved as the
+and navigate into the lessons of each course, and the process is saved as the
 user goes on and on.
 
 # Installation
 
 For this app you need to run `yarn` to install all dependencies, and then
-run `yarn dev` to start the development server.
+run `yarn android` (if you are running on android) or `yarn ios` (if you 
+are running on IOS) to start the development server.
 
 # App informations
 
