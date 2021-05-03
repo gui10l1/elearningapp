@@ -21,7 +21,7 @@ For this app you need to run `yarn` to install all dependencies, and then
 run `yarn android` (if you are running on android) or `yarn ios` (if you 
 are running on IOS) to start the development server.
 
-# App informations
+# App information
 
 ## Configuration
 
